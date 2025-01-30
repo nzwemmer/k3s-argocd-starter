@@ -1,0 +1,72 @@
+defaultRules:
+  create: true
+  rules:
+    etcd: false
+    kubeScheduler: false
+alertmanager:
+  enabled: true
+  ingress:
+    enabled: false
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: openebs-hostpath
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+grafana:
+  enabled: true
+  ingress:
+    enabled: false
+  adminPassword: prom-operator
+  persistence:
+    type: pvc
+    enabled: true
+    storageClassName: openebs-hostpath
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+kubeApiServer:
+  enabled: true
+kubelet:
+  enabled: true
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: true
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+nodeExporter:
+  enabled: true
+prometheus:
+  enabled: true
+  ingress:
+    enabled: false
+  prometheusSpec:
+    retention: 10d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 200Mi
+      limits:
+        cpu: 500m
+        memory: 500Mi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: openebs-hostpath
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi

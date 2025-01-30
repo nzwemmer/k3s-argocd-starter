@@ -42,6 +42,7 @@ graph TD
     subgraph "Argo CD Projects"
         IP[Infrastructure Project] --> IAS[Infrastructure ApplicationSet]
         AP[Applications Project] --> AAS[Applications ApplicationSet]
+        MP[Monitoring Project] --> MAS[Monitoring ApplicationSet]
     end
     
     subgraph "Infrastructure Components"
@@ -56,6 +57,13 @@ graph TD
         S --> OpenEBS
         
         C --> CertManager
+    end
+    
+    subgraph "Monitoring Stack"
+        MAS --> Prometheus
+        MAS --> Grafana
+        MAS --> AlertManager
+        MAS --> NodeExporter
     end
     
     subgraph "User Applications"
@@ -221,6 +229,31 @@ Update the argocd-secret secret with the new bcrypt hash.
 kubectl -n argocd patch secret argocd-secret -p '{"stringData": { "admin.password": "$2a$10$rgDBwhzr0ygDfH6scxkdddddx3cd612Cutw1Xu1X3a.kVrRq", "admin.passwordMtime": "'$(date +%FT%T%Z)'" }}'
 ```
 
+### 5. Monitoring Setup (Prometheus Stack)
+```bash
+# The monitoring stack will be deployed automatically through Argo CD
+# It includes:
+# - Prometheus for metrics collection
+# - Grafana for visualization
+# - AlertManager for alerting
+# - Node Exporter for hardware/OS metrics
+# - Various Kubernetes exporters
+
+# Access URLs (after DNS/Gateway setup):
+# - Grafana: https://grafana.yourdomain.xyz
+#   Default credentials:
+#   Username: admin
+#   Password: prom-operator
+# - Prometheus: https://prometheus.yourdomain.xyz
+# - AlertManager: https://alertmanager.yourdomain.xyz
+
+# Storage:
+# The stack is configured with persistent storage using OpenEBS:
+# - Prometheus: 50Gi for time series data
+# - Grafana: 10Gi for dashboards and configurations
+# - AlertManager: 10Gi for alert history
+```
+
 ## 🔒 Security Setup
 
 ### Cloudflare Integration
@@ -308,6 +341,12 @@ kubectl apply -f infrastructure/infrastructure-components-appset.yaml -n argocd
 
 # Wait for core services (5-30 mins for certs)
 kubectl wait --for=condition=Available deployment -l type=infrastructure --all-namespaces --timeout=1800s
+
+# Deploy monitoring stack
+kubectl apply -f monitoring/monitoring-components-appset.yaml -n argocd
+
+# Wait for monitoring components
+kubectl wait --for=condition=Available deployment -l type=monitoring --all-namespaces --timeout=600s
 
 # Deploy applications
 kubectl apply -f my-apps/myapplications-appset.yaml
