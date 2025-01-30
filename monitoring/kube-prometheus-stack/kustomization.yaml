@@ -10,5 +10,6 @@ helmCharts:
     releaseName: kube-prometheus-stack
     namespace: monitoring
     valuesFile: values.yaml
+    includeCRDs: true
 commonLabels:
   app.kubernetes.io/name: kube-prometheus-stack
