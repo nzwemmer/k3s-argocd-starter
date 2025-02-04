@@ -1,6 +1,11 @@
 🚀 Kubernetes Starter Kit
 =========================
 
+[![Tutorial Walkthrough Video](https://img.youtube.com/vi/AY5mC5rDUcw/0.jpg)](https://youtu.be/AY5mC5rDUcw)
+
+Tutorial Video
+
+
 > Modern GitOps deployment structure using Argo CD on Kubernetes
 
 This starter kit provides a production-ready foundation for deploying applications and infrastructure components using GitOps principles. Compatible with both Raspberry Pi and x86 systems.
