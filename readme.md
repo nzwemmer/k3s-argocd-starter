@@ -1,9 +1,10 @@
 🚀 Kubernetes Starter Kit
 =========================
 
+Tutorial Video
+
 [![Tutorial Walkthrough Video](https://img.youtube.com/vi/AY5mC5rDUcw/0.jpg)](https://youtu.be/AY5mC5rDUcw)
 
-Tutorial Video
 
 
 > Modern GitOps deployment structure using Argo CD on Kubernetes
