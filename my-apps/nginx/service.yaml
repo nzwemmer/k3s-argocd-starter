@@ -3,7 +3,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx
+  annotations:
+    # Request a specific IP from the Cilium IPAM pool
+    lbipam.cilium.io/ips: "192.168.10.25"
 spec:
+  type: LoadBalancer
+  # Use L2 announcements for the LoadBalancer
+  loadBalancerClass: io.cilium/l2-announcer
   selector:
     app: nginx
   ports:
