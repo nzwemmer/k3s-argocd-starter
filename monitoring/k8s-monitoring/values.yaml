@@ -1,0 +1,24 @@
+# Basic configuration for k8s-monitoring
+cluster:
+  name: k3s-cluster # Set your cluster name here
+# Define where to send telemetry data
+destinations:
+  - name: localPrometheus
+    type: prometheus
+    url: http://prometheus-operator.monitoring.svc.cluster.local:9090
+# Features to enable
+clusterMetrics:
+  enabled: true
+clusterEvents:
+  enabled: true
+podLogs:
+  enabled: true
+nodeLogs:
+  enabled: true
+# Self-reporting is enabled by default
+selfReporting:
+  enabled: true
+# Configure service integrations as needed
+integrations:
+  # No integrations enabled by default
+  destinations: []
