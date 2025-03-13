@@ -2,10 +2,22 @@
 cluster:
   name: k3s-cluster # Set your cluster name here
 # Define where to send telemetry data
+# Note: You may need to adjust the URL after the initial deployment
+# to point to the actual Prometheus service created by this chart
 destinations:
   - name: localPrometheus
     type: prometheus
-    url: http://prometheus-operator.monitoring.svc.cluster.local:9090
+    url: http://k8s-monitoring-prometheus.monitoring.svc.cluster.local:9090
+    # Alternative URLs to try if the above doesn't work:
+    # - http://prometheus-k8s-monitoring.monitoring.svc.cluster.local:9090
+    # - http://prometheus-operated.monitoring.svc.cluster.local:9090
+# Enable required collectors
+alloy-metrics:
+  enabled: true
+alloy-logs:
+  enabled: true
+alloy-singleton:
+  enabled: true # Required for some features
 # Features to enable
 clusterMetrics:
   enabled: true

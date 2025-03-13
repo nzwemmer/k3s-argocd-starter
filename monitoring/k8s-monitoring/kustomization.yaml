@@ -9,5 +9,7 @@ helmCharts:
     namespace: monitoring
     valuesFile: values.yaml
     includeCRDs: true
-commonLabels:
-  app.kubernetes.io/name: k8s-monitoring
+labels:
+  - pairs:
+      app.kubernetes.io/name: k8s-monitoring
+    includeSelectors: true
