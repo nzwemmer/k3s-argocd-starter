@@ -3,7 +3,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: oopenebs-hostpath
+          storageClassName: openebs-hostpath
           volumeName: pv-prometheus
           accessModes:
             - ReadWriteOnce
@@ -13,6 +13,5 @@ prometheus:
           selector:
             matchLabels:
               app: prometheus
-
 nodeExporter:
   enabled: false
