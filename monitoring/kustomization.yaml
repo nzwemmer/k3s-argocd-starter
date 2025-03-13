@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - project.yaml
-  - k8s-monitoring/
+  - prometheus-stack/
