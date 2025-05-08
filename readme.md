@@ -181,7 +181,7 @@ rm cilium-linux-${CLI_ARCH}.tar.gz*
 helm repo add cilium https://helm.cilium.io && helm repo update
 helm install cilium cilium/cilium -n kube-system \
   -f infrastructure/networking/cilium/values.yaml \
-  --version 1.17.0-rc.2 \
+  --version 1.17.3 \
   --set operator.replicas=1
 
 # Validate installation
