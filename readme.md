@@ -118,10 +118,10 @@ echo -e "xt_socket\niptable_raw" | sudo tee /etc/modules-load.d/cilium.conf
 ### 2. K3s Installation
 ```bash
 # Customize these values!
-export SETUP_NODEIP=192.168.10.202  # Your node IP
-export SETUP_CLUSTERTOKEN=randomtokensecret1234  # Strong token
+export SETUP_NODEIP=192.168.101.176  # Your node IP
+export SETUP_CLUSTERTOKEN=randomtokensecret12343  # Strong token
 
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.2+k3s1" \
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.33.1+k3s1" \
   INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP \
   --disable=flannel,local-storage,metrics-server,servicelb,traefik \
   --flannel-backend='none' \
@@ -142,8 +142,8 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config && chmod 600 $HOME/.kube/config
 sudo cat /var/lib/rancher/k3s/server/node-token
 
 # On each WORKER node:
-export MASTER_IP=192.168.10.202  # IP of your master node
-export NODE_IP=192.168.10.203    # IP of THIS worker node
+export MASTER_IP=192.168.101.202  # IP of your master node
+export NODE_IP=192.168.101.203    # IP of THIS worker node
 export K3S_TOKEN=your-node-token # From master's node-token file
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.0+k3s1" \
@@ -169,6 +169,7 @@ kubectl get nodes -o wide
 ### 3. Networking Setup (Cilium)
 ```bash
 # Install Cilium CLI
+## CHECK ARCH FIRST
 CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
 CLI_ARCH=amd64 && [ "$(uname -m)" = "aarch64" ] && CLI_ARCH=arm64
 curl -L --fail --remote-name-all \
