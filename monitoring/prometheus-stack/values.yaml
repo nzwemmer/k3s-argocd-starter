@@ -24,19 +24,10 @@ prometheus:
     retentionSize: 45GB
     evaluationInterval: 30s
     scrapeInterval: 30s
-    # Enable Thanos sidecar for long-term storage
-    thanos:
-      enabled: true
-      version: v0.32.5
-      objectStorageConfig:
-        secret:
-          type: S3
-          config:
-            bucket: thanos
-            endpoint: minio.monitoring.svc.cluster.local:9000
-            access_key: minioadmin
-            secret_key: minioadmin
-            insecure: true
+    # Enable external labels for Thanos
+    externalLabels:
+      cluster: k3s-cluster
+      region: local
     # Additional scrape configs for comprehensive monitoring
     additionalScrapeConfigs:
       - job_name: 'kubernetes-pods'
