@@ -39,6 +39,9 @@ buckets:
   - name: loki-ruler
     policy: none
     purge: false
+  - name: loki-admin
+    policy: none
+    purge: false
   - name: tempo-traces
     policy: none
     purge: false

@@ -2,12 +2,36 @@
 deploymentMode: SimpleScalable
 loki:
   auth_enabled: false
-  # Enhanced configuration
-  server:
-    grpc_server_max_recv_msg_size: 8388608
-    grpc_server_max_send_msg_size: 8388608
-    http_server_read_timeout: 600s
-    http_server_write_timeout: 600s
+  # Schema configuration
+  schemaConfig:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  # Storage configuration
+  storage:
+    type: s3
+    bucketNames:
+      chunks: loki-data
+      ruler: loki-ruler
+      admin: loki-admin
+    s3:
+      endpoint: minio.monitoring.svc.cluster.local:9000
+      accessKeyId: minioadmin
+      secretAccessKey: minioadmin
+      s3ForcePathStyle: true
+      insecure: true
+  # Common configuration
+  commonConfig:
+    replication_factor: 2
+    ring:
+      kvstore:
+        store: memberlist
+  # Limits configuration
   limits_config:
     enforce_metric_name: false
     reject_old_samples: true
@@ -21,53 +45,51 @@ loki:
     max_label_value_length: 20480
     max_label_name_length: 10240
     max_label_names_per_series: 300
-  schema_config:
-    configs:
-      - from: 2024-04-01
-        store: tsdb
-        object_store: s3
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-  common:
-    storage:
-      s3:
-        endpoint: minio.monitoring.svc.cluster.local:9000
-        insecure: true
-        bucketnames: loki-data
-        access_key_id: minioadmin
-        secret_access_key: minioadmin
-        s3forcepathstyle: true
-    ring:
-      kvstore:
-        store: memberlist
-  memberlist:
-    join_members:
-      - loki-memberlist
+    retention_period: 168h # 7 days
+  # Server configuration
+  server:
+    grpc_server_max_recv_msg_size: 8388608
+    grpc_server_max_send_msg_size: 8388608
+    http_server_read_timeout: 600s
+    http_server_write_timeout: 600s
+  # Ingester configuration
   ingester:
     chunk_encoding: snappy
     chunk_target_size: 1572864
     max_chunk_age: 2h
+  # Querier configuration
   querier:
     max_concurrent: 4
+  # Query scheduler configuration
   query_scheduler:
     max_outstanding_requests_per_tenant: 4096
+  # Frontend configuration
   frontend:
     max_outstanding_per_tenant: 4096
     compress_responses: true
+  # Compactor configuration
   compactor:
-    working_directory: /var/loki/boltdb-shipper-compactor
+    working_directory: /var/loki/compactor
     shared_store: s3
     compaction_interval: 10m
     retention_enabled: true
     retention_delete_delay: 2h
     retention_delete_worker_count: 150
+  # Memberlist configuration
+  memberlist:
+    join_members:
+      - loki-memberlist
+  # Pattern ingester
+  pattern_ingester:
+    enabled: true
+  # Ruler configuration
   ruler:
+    enable_api: true
     storage:
+      type: s3
       s3:
         bucketnames: loki-ruler
-# Resource management for components
+# Deployment configuration
 backend:
   replicas: 2
   resources:
@@ -78,6 +100,7 @@ backend:
       cpu: 500m
       memory: 1Gi
   persistence:
+    enabled: true
     storageClass: longhorn
     size: 10Gi
 read:
@@ -99,6 +122,7 @@ write:
       cpu: 500m
       memory: 1Gi
   persistence:
+    enabled: true
     storageClass: longhorn
     size: 10Gi
 # Gateway configuration
@@ -115,6 +139,25 @@ gateway:
 # Single Binary mode disabled in favor of SimpleScalable
 singleBinary:
   replicas: 0
+# Disable other deployment modes
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0
 # Monitoring and metrics
 monitoring:
   dashboards:
@@ -125,8 +168,7 @@ monitoring:
     enabled: true
     labels:
       release: kube-prometheus-stack
-test:
-  enabled: false
+# Loki Canary
 lokiCanary:
   enabled: true
   resources:
@@ -136,3 +178,15 @@ lokiCanary:
     limits:
       cpu: 100m
       memory: 128Mi
+# Disable test
+test:
+  enabled: false
+# Disable chunksCache and resultsCache (using simple setup)
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+# Table manager (legacy, but some versions might still reference it)
+tableManager:
+  retention_deletes_enabled: false
+  retention_period: 0s
