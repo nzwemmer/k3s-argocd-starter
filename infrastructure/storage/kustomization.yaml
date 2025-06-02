@@ -5,4 +5,4 @@ kind: Kustomization
 resources:
   - project.yaml
   - application-set.yaml
-  - openebs/
+
