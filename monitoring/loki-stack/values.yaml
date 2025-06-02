@@ -1,0 +1,138 @@
+# Loki Configuration for Comprehensive Log Aggregation
+deploymentMode: SimpleScalable
+loki:
+  auth_enabled: false
+  # Enhanced configuration
+  server:
+    grpc_server_max_recv_msg_size: 8388608
+    grpc_server_max_send_msg_size: 8388608
+    http_server_read_timeout: 600s
+    http_server_write_timeout: 600s
+  limits_config:
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+    max_cache_freshness_per_query: 10m
+    split_queries_by_interval: 15m
+    max_query_parallelism: 32
+    max_streams_per_user: 10000
+    max_line_size: 256000
+    max_entries_limit_per_query: 5000
+    max_label_value_length: 20480
+    max_label_name_length: 10240
+    max_label_names_per_series: 300
+  schema_config:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  common:
+    storage:
+      s3:
+        endpoint: minio.monitoring.svc.cluster.local:9000
+        insecure: true
+        bucketnames: loki-data
+        access_key_id: minioadmin
+        secret_access_key: minioadmin
+        s3forcepathstyle: true
+    ring:
+      kvstore:
+        store: memberlist
+  memberlist:
+    join_members:
+      - loki-memberlist
+  ingester:
+    chunk_encoding: snappy
+    chunk_target_size: 1572864
+    max_chunk_age: 2h
+  querier:
+    max_concurrent: 4
+  query_scheduler:
+    max_outstanding_requests_per_tenant: 4096
+  frontend:
+    max_outstanding_per_tenant: 4096
+    compress_responses: true
+  compactor:
+    working_directory: /var/loki/boltdb-shipper-compactor
+    shared_store: s3
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+  ruler:
+    storage:
+      s3:
+        bucketnames: loki-ruler
+# Resource management for components
+backend:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 300m
+      memory: 600Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  persistence:
+    storageClass: longhorn
+    size: 10Gi
+read:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 300m
+      memory: 600Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+write:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 300m
+      memory: 600Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  persistence:
+    storageClass: longhorn
+    size: 10Gi
+# Gateway configuration
+gateway:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+# Single Binary mode disabled in favor of SimpleScalable
+singleBinary:
+  replicas: 0
+# Monitoring and metrics
+monitoring:
+  dashboards:
+    enabled: true
+  rules:
+    enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+test:
+  enabled: false
+lokiCanary:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

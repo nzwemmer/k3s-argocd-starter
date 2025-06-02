@@ -1,0 +1,118 @@
+# MinIO Configuration for Observability Storage Backend
+# Storage mode
+mode: standalone
+# Resource management
+resources:
+  requests:
+    memory: 500Mi
+    cpu: 250m
+  limits:
+    memory: 1Gi
+    cpu: 500m
+# Replicas for standalone mode
+replicas: 1
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 100Gi
+# Security configuration
+rootUser: minioadmin
+rootPassword: minioadmin
+# Service configuration
+service:
+  type: ClusterIP
+  port: 9000
+# Console service
+consoleService:
+  type: ClusterIP
+  port: 9001
+# Default buckets to create
+buckets:
+  - name: thanos
+    policy: none
+    purge: false
+  - name: loki-data
+    policy: none
+    purge: false
+  - name: loki-ruler
+    policy: none
+    purge: false
+  - name: tempo-traces
+    policy: none
+    purge: false
+# Environment variables
+environment:
+  MINIO_PROMETHEUS_AUTH_TYPE: "public"
+  MINIO_UPDATE: "off"
+  MINIO_BROWSER_REDIRECT_URL: "https://minio-console.vanillax.xyz"
+# Security context
+securityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+# Pod security context
+podSecurityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+# Network policy
+networkPolicy:
+  enabled: false
+# Service monitor for Prometheus integration
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack
+# Metrics configuration
+metrics:
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+    namespace: monitoring
+# Ingress disabled (using Gateway API)
+ingress:
+  enabled: false
+consoleIngress:
+  enabled: false
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - minio
+          topologyKey: kubernetes.io/hostname
+# Additional labels
+extraLabels:
+  app.kubernetes.io/part-of: observability-stack
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /minio/health/live
+    port: 9000
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 10
+  successThreshold: 1
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /minio/health/ready
+    port: 9000
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 10
+  successThreshold: 1
+  failureThreshold: 3

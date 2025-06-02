@@ -1,0 +1,202 @@
+# Promtail Configuration for Comprehensive Log Collection
+config:
+  # Global configuration
+  server:
+    http_listen_port: 3101
+    grpc_listen_port: 9096
+    log_level: info
+  # Position tracking
+  positions:
+    filename: /run/promtail/positions.yaml
+  # Loki client configuration
+  clients:
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+      tenant_id: ""
+  # Enhanced scrape configurations
+  scrape_configs:
+    # Kubernetes pod logs
+    - job_name: kubernetes-pods
+      kubernetes_sd_configs:
+        - role: pod
+      pipeline_stages:
+        - cri: {}
+        - labeldrop:
+            - __meta_kubernetes_pod_container_id
+        - labelmap:
+            __meta_kubernetes_pod_name: pod
+            __meta_kubernetes_namespace_name: namespace
+            __meta_kubernetes_pod_container_name: container
+            __meta_kubernetes_pod_node_name: node
+        - match:
+            selector: '{container="prometheus"}'
+            stages:
+              - regex:
+                  expression: '.*level=(?P<level>[a-zA-Z]+).*'
+              - labels:
+                  level:
+        - match:
+            selector: '{container="grafana"}'
+            stages:
+              - regex:
+                  expression: '.*logger=(?P<logger>[a-zA-Z.]+).*'
+              - labels:
+                  logger:
+      relabel_configs:
+        - source_labels:
+            - __meta_kubernetes_pod_controller_name
+          regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
+          action: replace
+          target_label: __tmp_controller_name
+        - source_labels:
+            - __meta_kubernetes_pod_label_app_kubernetes_io_name
+            - __meta_kubernetes_pod_label_app
+            - __tmp_controller_name
+            - __meta_kubernetes_pod_name
+          regex: ^;*([^;]+)(;.*)?$
+          action: replace
+          target_label: app
+        - source_labels:
+            - __meta_kubernetes_pod_label_app_kubernetes_io_instance
+            - __meta_kubernetes_pod_label_instance
+          regex: ^;*([^;]+)(;.*)?$
+          action: replace
+          target_label: instance
+        - source_labels:
+            - __meta_kubernetes_pod_label_app_kubernetes_io_component
+            - __meta_kubernetes_pod_label_component
+          regex: ^;*([^;]+)(;.*)?$
+          action: replace
+          target_label: component
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_node_name
+          target_label: node_name
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_namespace_name
+          target_label: namespace
+        - action: replace
+          replacement: $1
+          separator: /
+          source_labels:
+            - namespace
+            - app
+          target_label: job
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_name
+          target_label: pod
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_container_name
+          target_label: container
+        - action: replace
+          replacement: /var/log/pods/*$1/*.log
+          separator: /
+          source_labels:
+            - __meta_kubernetes_pod_uid
+            - __meta_kubernetes_pod_container_name
+          target_label: __path__
+        - action: replace
+          regex: true/(.*)
+          replacement: /var/log/pods/*$1/*.log
+          separator: /
+          source_labels:
+            - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
+            - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
+            - __meta_kubernetes_pod_container_name
+          target_label: __path__
+    # System journal logs
+    - job_name: journal
+      journal:
+        max_age: 12h
+        labels:
+          job: systemd-journal
+      pipeline_stages:
+        - match:
+            selector: '{unit="kubelet.service"}'
+            stages:
+              - regex:
+                  expression: '.* (?P<level>I|W|E|F)[0-9]+ .*'
+              - labels:
+                  level:
+        - match:
+            selector: '{unit="containerd.service"}'
+            stages:
+              - regex:
+                  expression: '.*level=(?P<level>[a-zA-Z]+).*'
+              - labels:
+                  level:
+      relabel_configs:
+        - source_labels: ['__journal__systemd_unit']
+          target_label: 'unit'
+        - source_labels: ['__journal__hostname']
+          target_label: 'hostname'
+        - source_labels: ['__journal_priority']
+          target_label: 'priority'
+    # Kernel logs
+    - job_name: kernel
+      static_configs:
+        - targets:
+            - localhost
+          labels:
+            job: kernel
+            __path__: /var/log/kern.log
+      pipeline_stages:
+        - match:
+            selector: '{job="kernel"}'
+            stages:
+              - regex:
+                  expression: '.*\[(?P<timestamp>.*?)\].*'
+              - timestamp:
+                  source: timestamp
+                  format: 'Jan 2 15:04:05'
+# DaemonSet configuration for node-level log collection
+daemonset:
+  enabled: true
+# Resource management
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+# Security context
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsGroup: 0
+  runAsUser: 0
+# Volume mounts for comprehensive log access
+extraVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+  - name: varlibdockercontainers
+    hostPath:
+      path: /var/lib/docker/containers
+extraVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+    readOnly: true
+  - name: varlibdockercontainers
+    mountPath: /var/lib/docker/containers
+    readOnly: true
+# Service monitor for Prometheus integration
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+# Additional labels and annotations
+extraLabels:
+  app.kubernetes.io/part-of: observability-stack
+# Enable priority class for system-level importance
+priorityClassName: system-node-critical
+# Tolerations to run on all nodes
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+    operator: Exists
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Exists

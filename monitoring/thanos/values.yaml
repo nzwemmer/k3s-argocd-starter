@@ -1,0 +1,170 @@
+# Thanos Configuration for Long-term Metrics Storage
+image:
+  registry: quay.io
+  repository: thanos/thanos
+  tag: v0.32.5
+# Object storage configuration
+objstoreConfig:
+  create: false
+  configSecret: thanos-object-storage
+  configSecretKey: objstore.yml
+# Query component - provides unified querying interface
+query:
+  enabled: true
+  replicaCount: 2
+  # Resource management
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+  # Service configuration
+  service:
+    type: ClusterIP
+    ports:
+      http: 9090
+      grpc: 10901
+  # Store API configuration
+  stores:
+    - "thanos-storegateway:10901"
+    - "kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:10901"
+  # Query configuration
+  extraFlags:
+    - "--log.level=info"
+    - "--query.replica-label=prometheus_replica"
+    - "--query.auto-downsampling"
+  # Service monitor
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+# Query Frontend - provides caching and query splitting
+queryFrontend:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 250m
+  service:
+    type: ClusterIP
+    ports:
+      http: 9090
+  config: |
+    type: IN-MEMORY
+    config:
+      max_size: 512MB
+      max_size_items: 1000
+      validity: 6h
+# Store Gateway - provides access to historical data
+storegateway:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
+  extraFlags:
+    - "--log.level=info"
+    - "--store.grpc.series-sample-limit=300000"
+    - "--store.grpc.series-max-concurrency=20"
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+# Compactor - compacts and downsamples metrics
+compactor:
+  enabled: true
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 100Gi
+  # Retention and downsampling configuration
+  extraFlags:
+    - "--log.level=info"
+    - "--compact.cleanup-interval=5m"
+    - "--compact.consistency-delay=30m"
+    - "--delete-delay=48h"
+    - "--retention.resolution-raw=30d"
+    - "--retention.resolution-5m=120d"
+    - "--retention.resolution-1h=1y"
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+# Ruler - evaluates recording and alerting rules
+ruler:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 10Gi
+  # Alertmanager configuration
+  alertmanagers:
+    - "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
+  # Query API configuration
+  queryURL: "http://thanos-query:9090"
+  extraFlags:
+    - "--log.level=info"
+    - "--rule-file=/etc/rules/**/*.yaml"
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+# Sidecar configuration (handled by prometheus-stack)
+sidecar:
+  enabled: false
+# Receive component for remote write (optional)
+receive:
+  enabled: false
+# Bucket Web - web interface for object storage
+bucketweb:
+  enabled: true
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+# Global configuration
+global:
+  imageRegistry: quay.io
+  storageClass: longhorn
+# Common labels
+commonLabels:
+  app.kubernetes.io/part-of: observability-stack
+# Metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack

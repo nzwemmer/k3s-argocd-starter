@@ -4,3 +4,10 @@ resources:
   - namespace.yaml
   - project.yaml
   - prometheus-stack/
+  - loki-stack/
+  - promtail/
+  - tempo/
+  - minio/
+  - thanos/
+  - blackbox-exporter/
+  - dashboards/

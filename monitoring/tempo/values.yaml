@@ -1,0 +1,84 @@
+# Tempo Configuration for Distributed Tracing
+tempo:
+  # Storage configuration
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: tempo-traces
+        endpoint: minio.monitoring.svc.cluster.local:9000
+        access_key: minioadmin
+        secret_key: minioadmin
+        insecure: true
+  # Retention configuration
+  retention: 72h
+  # Global overrides
+  global_overrides:
+    max_traces_per_user: 20000
+    max_bytes_per_trace: 5000000
+  # Distributor configuration
+  distributor:
+    receivers:
+      jaeger:
+        protocols:
+          thrift_http:
+            endpoint: 0.0.0.0:14268
+          grpc:
+            endpoint: 0.0.0.0:14250
+          thrift_binary:
+            endpoint: 0.0.0.0:6832
+          thrift_compact:
+            endpoint: 0.0.0.0:6831
+      zipkin:
+        endpoint: 0.0.0.0:9411
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      opencensus:
+        endpoint: 0.0.0.0:55678
+  # Ingester configuration
+  ingester:
+    max_block_duration: 5m
+  # Compactor configuration  
+  compactor:
+    compaction:
+      block_retention: 72h
+  # Querier configuration
+  querier:
+    max_concurrent_queries: 20
+  # Query frontend configuration
+  query_frontend:
+    max_outstanding_per_tenant: 100
+# Resource management
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+# Persistence for traces
+persistence:
+  enabled: true
+  storageClassName: longhorn
+  size: 30Gi
+# Service monitor for Prometheus integration
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+# Gateway configuration for external access
+gateway:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+# Additional configuration
+config: "multitenancy_enabled: false\nusage_report:\n  reporting_enabled: false\ncompactor:\n  working_directory: /tmp/tempo\n  shared_store: s3\n  compaction:\n    chunk_size_bytes: 10485760\n    block_retention: 72h\n    compacted_block_retention: 1h\n    compaction_window: 1h\n    max_compaction_objects: 1000000\n    retention_concurrency: 10\n    v2_in_buffer_bytes: 5242880\n    v2_out_buffer_bytes: 20971520\n    v2_prefetch_traces_count: 1000\n    v2_index_downsample_bytes: 1000\n    v2_encoding: zstd\ndistributor:\n  ring:\n    kvstore:\n      store: memberlist\ningester:\n  ring:\n    kvstore:\n      store: memberlist\n    replication_factor: 1\nmemberlist:\n  abort_if_cluster_join_fails: false\n  join_members:\n    - tempo-memberlist\noverrides:\n  defaults:\n    global:\n      max_traces_per_user: 20000\n      max_bytes_per_trace: 5000000\n    distributor:\n      max_ingestion_rate_strategy: global\n      max_ingestion_rate_bytes: 15000000\n      max_ingestion_burst_size_bytes: 20000000\n    ingester:\n      max_traces_per_user: 10000\n      max_global_traces_per_user: 20000\n    forwarders:\n      jaeger:\n        queue_size: 1000\n        workers: 10\n        retry_attempts: 3\n      zipkin:\n        queue_size: 1000\n        workers: 10\n        retry_attempts: 3\n      otlp:\n        queue_size: 1000\n        workers: 10\n        retry_attempts: 3\nquerier:\n  max_concurrent_queries: 20\n  ring:\n    kvstore:\n      store: memberlist\nquery_frontend:\n  max_outstanding_per_tenant: 100\nserver:\n  http_listen_port: 3100\n  log_level: info\nstorage:\n  trace:\n    backend: s3\n    wal:\n      path: /tmp/tempo/wal\n    s3:\n      bucket: tempo-traces\n      endpoint: minio.monitoring.svc.cluster.local:9000\n      access_key: minioadmin\n      secret_key: minioadmin\n      insecure: true\n    pool:\n      max_workers: 100\n      queue_depth: 10000 "
