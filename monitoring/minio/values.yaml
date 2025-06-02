@@ -62,12 +62,7 @@ podSecurityContext:
 # Network policy
 networkPolicy:
   enabled: false
-# Service monitor for Prometheus integration
-serviceMonitor:
-  enabled: true
-  additionalLabels:
-    release: kube-prometheus-stack
-# Metrics configuration
+# Metrics configuration with service monitor
 metrics:
   serviceMonitor:
     enabled: true
