@@ -2,6 +2,8 @@
 deploymentMode: SimpleScalable
 loki:
   auth_enabled: false
+  commonConfig:
+    replication_factor: 2
   # Schema configuration
   schemaConfig:
     configs:
@@ -25,71 +27,18 @@ loki:
       secretAccessKey: minioadmin
       s3ForcePathStyle: true
       insecure: true
-  # Common configuration
-  commonConfig:
-    replication_factor: 2
-    ring:
-      kvstore:
-        store: memberlist
   # Limits configuration
   limits_config:
-    enforce_metric_name: false
-    reject_old_samples: true
-    reject_old_samples_max_age: 168h
-    max_cache_freshness_per_query: 10m
-    split_queries_by_interval: 15m
-    max_query_parallelism: 32
-    max_streams_per_user: 10000
-    max_line_size: 256000
-    max_entries_limit_per_query: 5000
-    max_label_value_length: 20480
-    max_label_name_length: 10240
-    max_label_names_per_series: 300
-    retention_period: 168h # 7 days
-  # Server configuration
-  server:
-    grpc_server_max_recv_msg_size: 8388608
-    grpc_server_max_send_msg_size: 8388608
-    http_server_read_timeout: 600s
-    http_server_write_timeout: 600s
-  # Ingester configuration
-  ingester:
-    chunk_encoding: snappy
-    chunk_target_size: 1572864
-    max_chunk_age: 2h
-  # Querier configuration
-  querier:
-    max_concurrent: 4
-  # Query scheduler configuration
-  query_scheduler:
-    max_outstanding_requests_per_tenant: 4096
-  # Frontend configuration
-  frontend:
-    max_outstanding_per_tenant: 4096
-    compress_responses: true
-  # Compactor configuration
-  compactor:
-    working_directory: /var/loki/compactor
-    shared_store: s3
-    compaction_interval: 10m
-    retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
-  # Memberlist configuration
-  memberlist:
-    join_members:
-      - loki-memberlist
+    allow_structured_metadata: true
+    volume_enabled: true
+    retention_period: 168h
   # Pattern ingester
   pattern_ingester:
     enabled: true
-  # Ruler configuration
+  # Ruler
   ruler:
     enable_api: true
-    storage:
-      type: s3
-      s3:
-        bucketnames: loki-ruler
-# Deployment configuration
+# Deployment configuration - SimpleScalable mode
 backend:
   replicas: 2
   resources:
@@ -136,10 +85,9 @@ gateway:
     limits:
       cpu: 200m
       memory: 256Mi
-# Single Binary mode disabled in favor of SimpleScalable
+# Disable single binary mode and other deployment modes
 singleBinary:
   replicas: 0
-# Disable other deployment modes
 ingester:
   replicas: 0
 querier:
@@ -158,7 +106,10 @@ bloomCompactor:
   replicas: 0
 bloomGateway:
   replicas: 0
-# Monitoring and metrics
+# Disable embedded MinIO (we use our own)
+minio:
+  enabled: false
+# Monitoring
 monitoring:
   dashboards:
     enabled: true
@@ -178,15 +129,10 @@ lokiCanary:
     limits:
       cpu: 100m
       memory: 128Mi
-# Disable test
+# Disable test and cache components for simplicity
 test:
   enabled: false
-# Disable chunksCache and resultsCache (using simple setup)
 chunksCache:
   enabled: false
 resultsCache:
   enabled: false
-# Table manager (legacy, but some versions might still reference it)
-tableManager:
-  retention_deletes_enabled: false
-  retention_period: 0s
