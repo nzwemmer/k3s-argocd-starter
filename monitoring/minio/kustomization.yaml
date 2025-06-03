@@ -6,8 +6,8 @@ resources:
 helmCharts:
   - name: minio
     repo: https://charts.min.io/
-    version: "5.0.7"
-    # releaseName: minio # Temporarily removed to test conflict
+    version: "5.0.10"
+    releaseName: minio
     namespace: monitoring
     valuesFile: values.yaml
     includeCRDs: false
