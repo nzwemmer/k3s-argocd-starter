@@ -69,18 +69,26 @@ alertmanager:
     # Basic alerting configuration
     config:
       global:
-        smtp_smarthost: 'localhost:587'
-        smtp_from: 'alertmanager@yourdomain.com'
+        smtp_smarthost: 'smtp.example.com:587'
+        smtp_from: 'alertmanager@example.com'
+        smtp_auth_username: 'your-smtp-username'
+        smtp_auth_password: 'your-smtp-password'
       route:
-        group_by: ['alertname']
-        group_wait: 10s
-        group_interval: 10s
-        repeat_interval: 1h
-        receiver: 'web.hook'
+        group_by: ['alertname', 'job']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+        receiver: 'default-receiver'
       receivers:
-        - name: 'web.hook'
+        - name: 'default-receiver'
+          email_configs:
+            - to: 'team-alerts@example.com'
+              send_resolved: true
           webhook_configs:
-            - url: 'http://127.0.0.1:5001/'
+            - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+              send_resolved: true
+            - url: 'http://your-alert-collector.example.com/webhook'
+              send_resolved: true
 # Enhanced Grafana configuration with best practices
 grafana:
   enabled: true

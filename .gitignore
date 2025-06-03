@@ -2,3 +2,9 @@
 **/.DS_Store
 .DS_Store
 infrastructure/controllers/argocd/charts/*
+/monitoring/prometheus-stack/charts
+/monitoring/loki-stack/charts
+/monitoring/minio/charts
+/monitoring/promtail/charts
+/monitoring/tempo/charts
+/monitoring/thanos/charts
