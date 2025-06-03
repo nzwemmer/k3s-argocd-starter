@@ -13,7 +13,6 @@ spec:
         revision: HEAD
         directories:
           - path: my-apps/*
-          - path: my-apps/*/*
           - exclude: true
             path: my-apps/myapplications-appset.yaml
   template:
