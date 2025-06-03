@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-bucket-setup
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: quay.io/minio/mc:RELEASE.2024-04-18T16-45-29Z
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for MinIO to be ready..."
+              until mc alias set minio http://minio-minio.monitoring.svc.cluster.local:9000 minioadmin minioadmin; do
+                echo "MinIO not ready, waiting..."
+                sleep 5
+              done
+
+              echo "Creating buckets..."
+              mc mb minio/thanos --ignore-existing
+              mc mb minio/loki --ignore-existing
+              mc mb minio/tempo --ignore-existing
+
+              echo "Setting bucket policies..."
+              mc anonymous set none minio/thanos
+              mc anonymous set none minio/loki
+              mc anonymous set none minio/tempo
+
+              echo "Bucket setup complete!"
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 50m
+            limits:
+              memory: 128Mi
+              cpu: 100m
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

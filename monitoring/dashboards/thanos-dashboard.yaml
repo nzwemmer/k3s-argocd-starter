@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: thanos-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  thanos.json: "{\n  \"dashboard\": {\n    \"id\": null,\n    \"title\": \"Thanos / Long-term Storage\",\n    \"tags\": [\"thanos\", \"metrics\", \"storage\"],\n    \"style\": \"dark\",\n    \"timezone\": \"browser\",\n    \"refresh\": \"30s\",\n    \"description\": \"Thanos long-term metrics storage overview\"\n  }\n} "

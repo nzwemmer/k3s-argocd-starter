@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: external-endpoints
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  prober:
+    url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+    scheme: http
+    path: /probe
+  module: http_2xx
+  targets:
+    staticConfig:
+      static:
+        - https://grafana.vanillax.xyz
+        - https://prometheus.vanillax.xyz
+        - https://alertmanager.vanillax.xyz
+        - https://thanos.vanillax.xyz
+        - https://loki.vanillax.xyz
+        - https://tempo.vanillax.xyz
+        - https://minio-console.vanillax.xyz
+  interval: 30s
+  scrapeTimeout: 10s

@@ -1,13 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+metadata:
+  name: loki
 namespace: monitoring
-resources:
-  - loki-gateway-route.yaml
 helmCharts:
   - name: loki
     repo: https://grafana.github.io/helm-charts
-    version: 6.30.0
+    version: "5.42.0"
     releaseName: loki
     namespace: monitoring
     valuesFile: values.yaml
-    includeCRDs: true
+resources:
+  - http-routes.yaml
+  - networkpolicy.yaml

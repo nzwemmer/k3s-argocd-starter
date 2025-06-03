@@ -1,10 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+metadata:
+  name: promtail
 namespace: monitoring
 helmCharts:
   - name: promtail
     repo: https://grafana.github.io/helm-charts
-    version: 6.16.6
+    version: "6.15.5"
     releaseName: promtail
     namespace: monitoring
     valuesFile: values.yaml
+resources:
+  - networkpolicy.yaml

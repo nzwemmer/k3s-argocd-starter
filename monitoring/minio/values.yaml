@@ -1,70 +1,143 @@
-# MinIO Configuration for Observability Storage Backend
-mode: standalone
-# Authentication
+replicas: 4
+mode: distributed
+existingSecret: ""
 rootUser: minioadmin
 rootPassword: minioadmin
-# Resource management
-resources:
-  requests:
-    memory: 500Mi
-    cpu: 250m
-  limits:
-    memory: 1Gi
-    cpu: 500m
-# Persistence configuration
+image:
+  repository: quay.io/minio/minio
+  tag: RELEASE.2024-04-18T19-09-19Z
+  pullPolicy: IfNotPresent
+mcImage:
+  repository: quay.io/minio/mc
+  tag: RELEASE.2024-04-18T16-45-29Z
+  pullPolicy: IfNotPresent
 persistence:
   enabled: true
   storageClass: longhorn
   accessMode: ReadWriteOnce
   size: 100Gi
-# Service configuration
 service:
   type: ClusterIP
+  clusterIP: ~
   port: 9000
-# Console service
+  nodePort: 32000
 consoleService:
   type: ClusterIP
+  clusterIP: ~
   port: 9001
-# Environment variables
-environment:
-  MINIO_PROMETHEUS_AUTH_TYPE: "public"
-  MINIO_UPDATE: "off"
-  MINIO_BROWSER_REDIRECT_URL: "https://minio-console.vanillax.xyz"
-# Default buckets to create
-buckets:
-  - name: thanos
-    policy: none
-    purge: false
-  - name: loki-data
-    policy: none
-    purge: false
-  - name: loki-ruler
-    policy: none
-    purge: false
-  - name: loki-admin
-    policy: none
-    purge: false
-  - name: tempo-traces
-    policy: none
-    purge: false
-# Security context
+  nodePort: 32001
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 500m
+  limits:
+    memory: 2Gi
+    cpu: 1000m
 securityContext:
   enabled: true
   runAsUser: 1000
   runAsGroup: 1000
   fsGroup: 1000
-# Metrics configuration
+  runAsNonRoot: true
+podSecurityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+networkPolicy:
+  enabled: false # We'll create custom ones
 metrics:
   serviceMonitor:
     enabled: true
-    additionalLabels:
-      release: kube-prometheus-stack
-    namespace: monitoring
-# Disable ingress (using Gateway API)
+    labels:
+      release: prometheus-stack
+    interval: 30s
+    scrapeTimeout: 10s
+makeBucketJob:
+  enabled: true
+  annotations: {}
+  podAnnotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+buckets:
+  - name: thanos
+    policy: none
+    purge: false
+    versioning: false
+    objectlocking: false
+  - name: loki
+    policy: none
+    purge: false
+    versioning: false
+    objectlocking: false
+  - name: tempo
+    policy: none
+    perge: false
+    versioning: false
+    objectlocking: false
+users: []
+svcaccts:
+  - accessKey: thanos
+    secretKey: thanos123
+    user: thanos
+  - accessKey: loki
+    secretKey: loki123
+    user: loki
+  - accessKey: tempo
+    secretKey: tempo123
+    user: tempo
+policies: []
+customCommands: []
+environment:
+  MINIO_PROMETHEUS_AUTH_TYPE: "public"
+  MINIO_PROMETHEUS_URL: "http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090"
+affinity: {}
+tolerations: []
+nodeSelector: {}
+topologySpreadConstraints: []
 ingress:
-  enabled: false
+  enabled: false # Using custom ingress
 consoleIngress:
+  enabled: false # Using custom ingress
+tls:
   enabled: false
-# Additional labels
-additionalLabels:
-  app.kubernetes.io/part-of: observability-stack
+  certSecret: ""
+  publicCrt: ""
+  privateKey: ""
+trustedCertsSecret: ""
+postJob:
+  podAnnotations: {}
+  annotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+updateJob:
+  podAnnotations: {}
+  annotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

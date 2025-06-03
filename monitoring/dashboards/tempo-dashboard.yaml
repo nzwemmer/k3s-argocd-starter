@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tempo-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  tempo.json: "{\n  \"dashboard\": {\n    \"id\": null,\n    \"title\": \"Tempo / Distributed Tracing\",\n    \"tags\": [\"tempo\", \"tracing\"],\n    \"style\": \"dark\",\n    \"timezone\": \"browser\",\n    \"refresh\": \"30s\",\n    \"description\": \"Tempo distributed tracing overview\"\n  }\n} "

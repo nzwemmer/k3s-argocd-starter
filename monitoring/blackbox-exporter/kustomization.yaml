@@ -1,10 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+metadata:
+  name: blackbox-exporter
 namespace: monitoring
 helmCharts:
   - name: prometheus-blackbox-exporter
     repo: https://prometheus-community.github.io/helm-charts
-    version: 9.8.0
+    version: "8.8.0"
     releaseName: blackbox-exporter
     namespace: monitoring
     valuesFile: values.yaml
+resources:
+  - probe-targets.yaml
+  - networkpolicy.yaml

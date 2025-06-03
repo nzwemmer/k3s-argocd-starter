@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cluster-overview-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  cluster-overview.json: "{\n  \"dashboard\": {\n    \"id\": null,\n    \"title\": \"Kubernetes Cluster Overview\",\n    \"tags\": [\"kubernetes\", \"cluster\"],\n    \"style\": \"dark\",\n    \"timezone\": \"browser\",\n    \"refresh\": \"30s\",\n    \"time\": {\n      \"from\": \"now-1h\",\n      \"to\": \"now\"\n    },\n    \"panels\": [\n      {\n        \"id\": 1,\n        \"title\": \"Cluster Resource Usage\",\n        \"type\": \"stat\",\n        \"targets\": [\n          {\n            \"expr\": \"sum(rate(container_cpu_usage_seconds_total[5m]))\",\n            \"legendFormat\": \"CPU Usage\"\n          }\n        ],\n        \"gridPos\": {\"h\": 4, \"w\": 6, \"x\": 0, \"y\": 0}\n      },\n      {\n        \"id\": 2,\n        \"title\": \"Memory Usage\",\n        \"type\": \"stat\",\n        \"targets\": [\n          {\n            \"expr\": \"sum(container_memory_usage_bytes) / sum(machine_memory_bytes) * 100\",\n            \"legendFormat\": \"Memory %\"\n          }\n        ],\n        \"gridPos\": {\"h\": 4, \"w\": 6, \"x\": 6, \"y\": 0}\n      },\n      {\n        \"id\": 3,\n        \"title\": \"Pod Count\",\n        \"type\": \"stat\",\n        \"targets\": [\n          {\n            \"expr\": \"count(kube_pod_info)\",\n            \"legendFormat\": \"Total Pods\"\n          }\n        ],\n        \"gridPos\": {\"h\": 4, \"w\": 6, \"x\": 12, \"y\": 0}\n      },\n      {\n        \"id\": 4,\n        \"title\": \"Node Count\",\n        \"type\": \"stat\",\n        \"targets\": [\n          {\n            \"expr\": \"count(kube_node_info)\",\n            \"legendFormat\": \"Nodes\"\n          }\n        ],\n        \"gridPos\": {\"h\": 4, \"w\": 6, \"x\": 18, \"y\": 0}\n      }\n    ]\n  }\n} "

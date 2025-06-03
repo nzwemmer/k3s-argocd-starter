@@ -1,22 +1,24 @@
-# Tempo Configuration for Distributed Tracing
-tempo:
-  # Storage configuration
-  storage:
-    trace:
-      backend: s3
-      s3:
-        bucket: tempo-traces
-        endpoint: minio.monitoring.svc.cluster.local:9000
-        access_key: minioadmin
-        secret_key: minioadmin
-        insecure: true
-  # Retention configuration
-  retention: 72h
-  # Global overrides
-  global_overrides:
-    max_traces_per_user: 20000
-    max_bytes_per_trace: 5000000
-  # Distributor configuration
+global:
+  image:
+    registry: docker.io
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: tempo
+      endpoint: minio-minio.monitoring.svc.cluster.local:9000
+      access_key: minioadmin
+      secret_key: minioadmin
+      insecure: true
+      hedge_requests_at: 500ms
+      hedge_requests_up_to: 3
+config:
+  multitenancy_enabled: false
+  usage_report:
+    reporting_enabled: false
+  compactor:
+    compaction:
+      block_retention: 72h # 3 days
   distributor:
     receivers:
       jaeger:
@@ -33,46 +35,126 @@ tempo:
         endpoint: 0.0.0.0:9411
       otlp:
         protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+          grpc:
+            endpoint: 0.0.0.0:4317
       opencensus:
         endpoint: 0.0.0.0:55678
-  # Ingester configuration
   ingester:
-    max_block_duration: 5m
-  # Compactor configuration  
-  compactor:
-    compaction:
-      block_retention: 72h
-  # Querier configuration
+    lifecycler:
+      ring:
+        kvstore:
+          store: memberlist
+        replication_factor: 2
+  memberlist:
+    join_members:
+      - tempo-distributed-memberlist
   querier:
     max_concurrent_queries: 20
-  # Query frontend configuration
+    frontend_worker:
+      frontend_address: tempo-distributed-query-frontend-discovery:9095
   query_frontend:
-    max_outstanding_per_tenant: 100
-# Resource management
-resources:
-  requests:
-    cpu: 500m
-    memory: 1Gi
-  limits:
-    cpu: 1000m
-    memory: 2Gi
-# Persistence for traces
-persistence:
-  enabled: true
-  storageClassName: longhorn
-  size: 30Gi
-# Service monitor for Prometheus integration
+    max_outstanding_per_tenant: 200
+  server:
+    http_listen_port: 3100
+    log_level: info
+  storage:
+    trace:
+      backend: s3
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+traces:
+  jaeger:
+    grpc:
+      enabled: true
+    thriftHttp:
+      enabled: true
+    thriftBinary:
+      enabled: true
+    thriftCompact:
+      enabled: true
+  zipkin:
+    enabled: true
+  otlp:
+    http:
+      enabled: true
+    grpc:
+      enabled: true
+  opencensus:
+    enabled: true
 serviceMonitor:
   enabled: true
   labels:
-    release: kube-prometheus-stack
-# Gateway configuration for external access
+    release: prometheus-stack
+ingester:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 30Gi
+    storageClass: longhorn
+distributor:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+queryFrontend:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+querier:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: longhorn
+memcached:
+  enabled: false
+memcachedExporter:
+  enabled: false
+minio:
+  enabled: false # Using external MinIO
 gateway:
   enabled: true
+  replicas: 2
   resources:
     requests:
       cpu: 100m
@@ -80,3 +162,7 @@ gateway:
     limits:
       cpu: 200m
       memory: 256Mi
+  service:
+    type: ClusterIP
+enterprise:
+  enabled: false

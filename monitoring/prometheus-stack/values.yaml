@@ -1,219 +1,174 @@
-# Best-in-class Prometheus Stack Configuration
 prometheus:
   prometheusSpec:
-    # Storage configuration
+    replicas: 2
+    retention: 15d
+    retentionSize: 45GB
     storageSpec:
       volumeClaimTemplate:
         spec:
           storageClassName: longhorn
-          accessModes:
-            - ReadWriteOnce
+          accessModes: ["ReadWriteOnce"]
           resources:
             requests:
               storage: 50Gi
-    # Resource management
     resources:
       requests:
         memory: 2Gi
-        cpu: 500m
+        cpu: 1000m
       limits:
-        memory: 8Gi
+        memory: 4Gi
         cpu: 2000m
-    # Retention and evaluation
-    retention: 15d
-    retentionSize: 45GB
-    evaluationInterval: 30s
-    scrapeInterval: 30s
-    # Enable external labels for Thanos
-    externalLabels:
-      cluster: k3s-cluster
-      region: local
-    # Additional scrape configs for comprehensive monitoring
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      fsGroup: 65534
     additionalScrapeConfigs:
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
-            replacement: $1:$2
-            target_label: __address__
-# Enhanced Alertmanager configuration
+      - job_name: 'thanos-sidecar'
+        static_configs:
+          - targets: ['thanos-sidecar.monitoring.svc.cluster.local:10902']
+    thanos:
+      enabled: true
+      objectStorageConfig:
+        secretName: thanos-objstore-config
+        secretKey: objstore.yml
 alertmanager:
-  enabled: true
   alertmanagerSpec:
+    replicas: 2
+    retention: 120h
     storage:
       volumeClaimTemplate:
         spec:
           storageClassName: longhorn
-          accessModes:
-            - ReadWriteOnce
+          accessModes: ["ReadWriteOnce"]
           resources:
             requests:
               storage: 10Gi
     resources:
       requests:
-        memory: 200Mi
+        memory: 256Mi
         cpu: 100m
       limits:
-        memory: 500Mi
-        cpu: 300m
-    # Basic alerting configuration
-    config:
-      global:
-        smtp_smarthost: 'smtp.example.com:587'
-        smtp_from: 'alertmanager@example.com'
-        smtp_auth_username: 'your-smtp-username'
-        smtp_auth_password: 'your-smtp-password'
-      route:
-        group_by: ['alertname', 'job']
-        group_wait: 30s
-        group_interval: 5m
-        repeat_interval: 4h
-        receiver: 'default-receiver'
-      receivers:
-        - name: 'default-receiver'
-          email_configs:
-            - to: 'team-alerts@example.com'
-              send_resolved: true
-          webhook_configs:
-            - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-              send_resolved: true
-            - url: 'http://your-alert-collector.example.com/webhook'
-              send_resolved: true
-# Enhanced Grafana configuration with best practices
+        memory: 512Mi
+        cpu: 200m
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      fsGroup: 65534
 grafana:
-  enabled: true
+  replicas: 2
+  admin:
+    existingSecret: grafana-credentials
+    userKey: admin-user
+    passwordKey: admin-password
   persistence:
     enabled: true
     storageClassName: longhorn
     size: 10Gi
   resources:
     requests:
-      memory: 200Mi
-      cpu: 100m
+      memory: 512Mi
+      cpu: 250m
     limits:
-      memory: 500Mi
+      memory: 1Gi
       cpu: 500m
-  # Admin credentials
-  adminPassword: prometheus-stack-admin
-  # Enhanced configuration
-  grafana.ini:
-    server:
-      root_url: "https://grafana.vanillax.xyz"
-    security:
-      allow_embedding: true
-    users:
-      allow_sign_up: false
-      auto_assign_org: true
-      auto_assign_org_role: Viewer
-    auth.anonymous:
-      enabled: false
-    log:
-      mode: console
-      level: info
-  # Data sources configuration
-  sidecar:
-    datasources:
-      enabled: true
-      defaultDatasourceEnabled: true
-  # Additional data sources for Loki and Tempo
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    fsGroup: 472
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'monitoring-dashboards'
+          orgId: 1
+          folder: 'Monitoring'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/monitoring
+  dashboards:
+    monitoring:
+      kubernetes-cluster-overview:
+        gnetId: 7249
+        revision: 1
+        datasource: Prometheus
+      kubernetes-nodes:
+        gnetId: 1860
+        revision: 29
+        datasource: Prometheus
+      kubernetes-pods:
+        gnetId: 6417
+        revision: 1
+        datasource: Prometheus
+      loki-logs:
+        gnetId: 13639
+        revision: 2
+        datasource: Loki
   additionalDataSources:
     - name: Loki
       type: loki
       url: http://loki-gateway.monitoring.svc.cluster.local
       isDefault: false
-      jsonData:
-        maxLines: 1000
     - name: Tempo
       type: tempo
-      url: http://tempo.monitoring.svc.cluster.local:3100
+      url: http://tempo-query-frontend.monitoring.svc.cluster.local:3100
       isDefault: false
-      jsonData:
-        tracesToLogs:
-          datasourceUid: loki
-          tags: ['job', 'instance', 'pod', 'namespace']
-        tracesToMetrics:
-          datasourceUid: prometheus
-          tags: [{key: 'service.name', value: 'service'}, {key: 'service.namespace', value: 'namespace'}]
-        serviceMap:
-          datasourceUid: prometheus
-# Node Exporter with full system monitoring
-prometheus-node-exporter:
+    - name: Thanos
+      type: prometheus
+      url: http://thanos-query.monitoring.svc.cluster.local:9090
+      isDefault: false
+nodeExporter:
   enabled: true
+  hostNetwork: true
+  hostPID: true
   resources:
     requests:
-      memory: 50Mi
+      memory: 64Mi
       cpu: 50m
     limits:
-      memory: 100Mi
+      memory: 128Mi
       cpu: 100m
-# Kube State Metrics for Kubernetes object metrics
-kube-state-metrics:
+kubeStateMetrics:
   enabled: true
   resources:
     requests:
-      memory: 100Mi
-      cpu: 50m
+      memory: 256Mi
+      cpu: 100m
     limits:
-      memory: 200Mi
+      memory: 512Mi
       cpu: 200m
-  collectors:
-    - certificatesigningrequests
-    - configmaps
-    - cronjobs
-    - daemonsets
-    - deployments
-    - endpoints
-    - horizontalpodautoscalers
-    - ingresses
-    - jobs
-    - limitranges
-    - mutatingwebhookconfigurations
-    - namespaces
-    - networkpolicies
-    - nodes
-    - persistentvolumeclaims
-    - persistentvolumes
-    - poddisruptionbudgets
-    - pods
-    - replicasets
-    - replicationcontrollers
-    - resourcequotas
-    - secrets
-    - services
-    - statefulsets
-    - storageclasses
-    - validatingwebhookconfigurations
-    - volumeattachments
-# Prometheus Operator configuration
 prometheusOperator:
   enabled: true
   resources:
     requests:
-      memory: 200Mi
+      memory: 256Mi
       cpu: 100m
     limits:
-      memory: 500Mi
-      cpu: 500m
-  # Enable additional CRDs
-  prometheusConfigReloader:
-    resources:
-      requests:
-        memory: 50Mi
-        cpu: 50m
-      limits:
-        memory: 100Mi
-        cpu: 100m
-# Enhanced default rules with comprehensive alerting
+      memory: 512Mi
+      cpu: 200m
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
+kubeApiServer:
+  enabled: true
+kubelet:
+  enabled: true
+kubeControllerManager:
+  enabled: true
+  endpoints:
+    - 192.168.1.10 # Update with your control plane IPs
+kubeScheduler:
+  enabled: true
+  endpoints:
+    - 192.168.1.10 # Update with your control plane IPs
+kubeProxy:
+  enabled: true
+kubeEtcd:
+  enabled: true
+  endpoints:
+    - 192.168.1.10 # Update with your control plane IPs
 defaultRules:
   create: true
   rules:
@@ -222,6 +177,7 @@ defaultRules:
     configReloaders: true
     general: true
     k8s: true
+    kubeApiserver: true
     kubeApiserverAvailability: true
     kubeApiserverSlos: true
     kubelet: true
@@ -232,33 +188,8 @@ defaultRules:
     kubernetesResources: true
     kubernetesStorage: true
     kubernetesSystem: true
-    kubeScheduler: true
-    kubeStateMetrics: true
-    network: true
     node: true
     nodeExporterAlerting: true
     nodeExporterRecording: true
     prometheus: true
     prometheusOperator: true
-# Service monitors for comprehensive metrics collection
-kubeApiServer:
-  enabled: true
-kubelet:
-  enabled: true
-  serviceMonitor:
-    metricRelabelings:
-      - sourceLabels: [__name__]
-        regex: 'kubelet_(pod_worker_latency_microseconds|pod_start_latency_microseconds|cgroup_manager_latency_microseconds|pod_worker_start_latency_microseconds|pleg_relist_latency_microseconds|pleg_relist_interval_microseconds|runtime_operations|runtime_operations_latency_microseconds|runtime_operations_errors|eviction_stats_age_microseconds|device_plugin_registration_count|device_plugin_alloc_latency_microseconds|network_plugin_operations_latency_microseconds)'
-        action: drop
-kubeControllerManager:
-  enabled: true
-coreDns:
-  enabled: true
-kubeEtcd:
-  enabled: true
-kubeScheduler:
-  enabled: true
-kubeProxy:
-  enabled: true
-nodeExporter:
-  enabled: false # We use prometheus-node-exporter instead
