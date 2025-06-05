@@ -208,7 +208,7 @@ monitoring:
     labels:
       release: prometheus-stack
   selfMonitoring:
-    enabled: true
+    enabled: false
     grafanaAgent:
       installOperator: false
   lokiCanary:
