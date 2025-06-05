@@ -84,7 +84,7 @@ buckets:
     objectlocking: false
   - name: tempo
     policy: none
-    perge: false
+    purge: false
     versioning: false
     objectlocking: false
 users: []

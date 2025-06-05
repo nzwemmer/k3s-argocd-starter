@@ -212,7 +212,7 @@ monitoring:
     grafanaAgent:
       installOperator: false
   lokiCanary:
-    enabled: true
+    enabled: false
 test:
   enabled: false
 memcached:
