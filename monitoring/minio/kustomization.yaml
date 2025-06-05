@@ -6,7 +6,7 @@ namespace: monitoring
 helmCharts:
   - name: minio
     repo: https://charts.min.io/
-    version: "5.0.15"
+    version: "5.4.0"
     releaseName: minio
     namespace: monitoring
     valuesFile: values.yaml
