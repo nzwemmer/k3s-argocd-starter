@@ -101,7 +101,6 @@ svcaccts:
 policies: []
 customCommands: []
 environment:
-  MINIO_PROMETHEUS_AUTH_TYPE: "public"
   MINIO_PROMETHEUS_URL: "http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090"
 affinity: {}
 tolerations: []
