@@ -15,5 +15,5 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: tempo-query-frontend
+        - name: tempo-distributed-query-frontend
           port: 3100

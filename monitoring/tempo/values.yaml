@@ -12,7 +12,7 @@ storage:
       insecure: true
       hedge_requests_at: 500ms
       hedge_requests_up_to: 3
-config:
+config: |
   multitenancy_enabled: false
   usage_report:
     reporting_enabled: false
