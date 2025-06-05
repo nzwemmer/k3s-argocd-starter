@@ -128,6 +128,8 @@ ruler:
             expr: up{job="thanos-query"}
   evalInterval: 30s
   clusterName: k3s-cluster
+  alertmanagers:
+    - http://prometheus-stack-kube-prom-alertmanager.monitoring.svc.cluster.local:9093
 receive:
   enabled: false # We're using sidecar mode
 bucketweb:
