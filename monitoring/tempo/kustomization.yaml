@@ -6,7 +6,7 @@ namespace: monitoring
 helmCharts:
   - name: tempo-distributed
     repo: https://grafana.github.io/helm-charts
-    version: "1.9.9"
+    version: "1.41.1"
     releaseName: tempo
     namespace: monitoring
     valuesFile: values.yaml
