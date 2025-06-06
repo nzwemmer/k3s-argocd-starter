@@ -141,6 +141,7 @@ compactor:
 ruler:
   enabled: true
   replicas: 2
+  maxUnavailable: 1
   resources:
     requests:
       cpu: 250m
