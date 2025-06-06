@@ -1,5 +1,5 @@
-replicas: 4
-mode: distributed
+replicas: 1
+mode: standalone
 existingSecret: ""
 rootUser: minioadmin
 rootPassword: minioadmin
@@ -15,7 +15,7 @@ persistence:
   enabled: true
   storageClass: longhorn
   accessMode: ReadWriteOnce
-  size: 100Gi
+  size: 50Gi
 service:
   type: ClusterIP
   clusterIP: ~
@@ -28,11 +28,11 @@ consoleService:
   nodePort: 32001
 resources:
   requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
     memory: 1Gi
     cpu: 500m
-  limits:
-    memory: 2Gi
-    cpu: 1000m
 securityContext:
   enabled: true
   runAsUser: 1000

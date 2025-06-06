@@ -7,21 +7,20 @@ existingObjstoreSecretItems:
     path: objstore.yml
 query:
   enabled: true
-  replicaCount: 2
+  replicaCount: 1
   dnsDiscovery:
     enabled: true
     sidecarsService: thanos-sidecar
     sidecarsNamespace: monitoring
   stores:
     - thanos-store-gateway:10901
-    - thanos-ruler:10901
   resources:
     requests:
+      memory: 256Mi
+      cpu: 125m
+    limits:
       memory: 512Mi
       cpu: 250m
-    limits:
-      memory: 1Gi
-      cpu: 500m
   securityContext:
     enabled: true
     runAsNonRoot: true
@@ -32,77 +31,10 @@ query:
       http: 9090
       grpc: 10901
 queryFrontend:
-  enabled: true
-  replicaCount: 2
-  config: |-
-    type: IN-MEMORY
-    config:
-      max_size: 256MB
-      max_size_items: 1000
-      validity: 6h
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 512Mi
-      cpu: 200m
-  securityContext:
-    enabled: true
-    runAsNonRoot: true
-    runAsUser: 1001
-    fsGroup: 1001
+  enabled: false
 storegateway:
   enabled: true
-  replicaCount: 2
-  persistence:
-    enabled: true
-    storageClass: longhorn
-    size: 50Gi
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
-  securityContext:
-    enabled: true
-    runAsNonRoot: true
-    runAsUser: 1001
-    fsGroup: 1001
-  config: |-
-    type: FILESYSTEM
-    config:
-      directory: /data
-compactor:
-  enabled: true
-  persistence:
-    enabled: true
-    storageClass: longhorn
-    size: 100Gi
-  resources:
-    requests:
-      memory: 2Gi
-      cpu: 1000m
-    limits:
-      memory: 4Gi
-      cpu: 2000m
-  securityContext:
-    enabled: true
-    runAsNonRoot: true
-    runAsUser: 1001
-    fsGroup: 1001
-  retentionResolutionRaw: 30d
-  retentionResolution5m: 120d
-  retentionResolution1h: 1y
-  config: |-
-    type: FILESYSTEM
-    config:
-      directory: /data
-ruler:
-  enabled: true
-  replicaCount: 2
+  replicaCount: 1
   persistence:
     enabled: true
     storageClass: longhorn
@@ -120,32 +52,38 @@ ruler:
     runAsUser: 1001
     fsGroup: 1001
   config: |-
-    groups:
-      - name: thanos.rules
-        interval: 30s
-        rules:
-          - record: thanos:up
-            expr: up{job="thanos-query"}
-  evalInterval: 30s
-  clusterName: k3s-cluster
-  alertmanagers:
-    - http://prometheus-stack-kube-prom-alertmanager.monitoring.svc.cluster.local:9093
-receive:
-  enabled: false # We're using sidecar mode
-bucketweb:
+    type: FILESYSTEM
+    config:
+      directory: /data
+compactor:
   enabled: true
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 50Gi
   resources:
     requests:
-      memory: 256Mi
-      cpu: 100m
+      memory: 1Gi
+      cpu: 500m
     limits:
-      memory: 512Mi
-      cpu: 200m
+      memory: 2Gi
+      cpu: 1000m
   securityContext:
     enabled: true
     runAsNonRoot: true
     runAsUser: 1001
     fsGroup: 1001
+  retentionResolutionRaw: 7d
+  retentionResolution5m: 30d
+  retentionResolution1h: 90d
+  config: |-
+    type: FILESYSTEM
+    config:
+      directory: /data
+ruler:
+  enabled: false
+bucketweb:
+  enabled: false
 sidecar:
   enabled: false # Deployed with Prometheus stack
 metrics:
