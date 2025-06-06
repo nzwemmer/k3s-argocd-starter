@@ -5,9 +5,12 @@ loki:
   auth_enabled: false
   storage:
     type: s3
+    bucketNames:
+      chunks: loki
+      ruler: loki
+      admin: loki
     s3:
       endpoint: minio-minio.monitoring.svc.cluster.local:9000
-      bucketnames: loki
       access_key_id: minioadmin
       secret_access_key: minioadmin
       s3forcepathstyle: true
