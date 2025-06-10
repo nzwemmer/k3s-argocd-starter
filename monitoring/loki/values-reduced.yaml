@@ -1,0 +1,136 @@
+# Reduced Loki configuration for resource-constrained environments
+global:
+  image:
+    registry: docker.io
+loki:
+  auth_enabled: false
+  storage:
+    type: s3
+    bucketNames:
+      chunks: loki
+      ruler: loki
+      admin: loki
+    s3:
+      endpoint: minio.monitoring.svc.cluster.local:9000
+      access_key_id: minioadmin
+      secret_access_key: minioadmin
+      s3forcepathstyle: true
+      insecure: true
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  limits_config:
+    retention_period: 168h # 7 days (reduced from 30)
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+    max_cache_freshness_per_query: 10m
+    split_queries_by_interval: 15m
+    max_query_parallelism: 8 # Reduced from 32
+    ingestion_rate_mb: 10 # Reduced from 50
+    ingestion_burst_size_mb: 20 # Reduced from 100
+    per_stream_rate_limit: 1MB # Reduced from 3MB
+    per_stream_rate_limit_burst: 5MB # Reduced from 15MB
+    max_streams_per_user: 5000 # Reduced from 10000
+    max_line_size: 256000
+  compactor:
+    working_directory: /var/loki/compactor
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 50 # Reduced from 150
+# Minimal deployment mode
+deploymentMode: SimpleScalable
+# Disable individual components (will use backend/write/read)
+ingester:
+  replicas: 0
+distributor:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+querier:
+  replicas: 0
+indexGateway:
+  replicas: 0
+compactor:
+  replicas: 0
+ruler:
+  enabled: false
+gateway:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m # Reduced from 100m
+      memory: 64Mi # Reduced from 128Mi
+    limits:
+      cpu: 50m # Reduced from 200m
+      memory: 128Mi # Reduced from 256Mi
+backend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m # Reduced from 250m
+      memory: 256Mi # Reduced from 512Mi
+    limits:
+      cpu: 200m # Reduced from 500m
+      memory: 512Mi # Reduced from 1Gi
+  persistence:
+    enabled: true
+    size: 2Gi # Reduced from 5Gi
+    storageClass: longhorn
+write:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m # Reduced from 250m
+      memory: 256Mi # Reduced from 512Mi
+    limits:
+      cpu: 200m # Reduced from 500m
+      memory: 512Mi # Reduced from 1Gi
+  persistence:
+    enabled: true
+    size: 2Gi # Reduced from 5Gi
+    storageClass: longhorn
+read:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m # Reduced from 250m
+      memory: 256Mi # Reduced from 512Mi
+    limits:
+      cpu: 200m # Reduced from 500m
+      memory: 512Mi # Reduced from 1Gi
+# Monitoring configuration
+monitoring:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus-stack
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: true # Keep enabled but it's lightweight
+# Disable test
+test:
+  enabled: false
+# Disable all memcached components
+memcached:
+  enabled: false
+memcachedExporter:
+  enabled: false
+memcachedChunks:
+  enabled: false
+memcachedFrontend:
+  enabled: false
+memcachedIndexQueries:
+  enabled: false
+memcachedIndexWrites:
+  enabled: false
