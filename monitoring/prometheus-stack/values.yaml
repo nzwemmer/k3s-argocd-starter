@@ -1,8 +1,8 @@
 prometheus:
   prometheusSpec:
     replicas: 1
-    retention: 7d
-    retentionSize: 20GB
+    retention: 15d
+    retentionSize: 15GB
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -10,7 +10,7 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 25Gi
+              storage: 20Gi
     resources:
       requests:
         memory: 1Gi
@@ -158,17 +158,17 @@ kubelet:
 kubeControllerManager:
   enabled: true
   endpoints:
-    - 192.168.1.10 # Update with your control plane IPs
+    - 192.168.101.176 # Update with your control plane IPs
 kubeScheduler:
   enabled: true
   endpoints:
-    - 192.168.1.10 # Update with your control plane IPs
+    - 192.168.101.176 # Update with your control plane IPs
 kubeProxy:
   enabled: true
 kubeEtcd:
   enabled: true
   endpoints:
-    - 192.168.1.10 # Update with your control plane IPs
+    - 192.168.101.176 # Update with your control plane IPs
 defaultRules:
   create: true
   rules:

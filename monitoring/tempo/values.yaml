@@ -6,7 +6,7 @@ storage:
     backend: s3
     s3:
       bucket: tempo
-      endpoint: minio-minio.monitoring.svc.cluster.local:9000
+      endpoint: minio.monitoring.svc.cluster.local:9000
       access_key: minioadmin
       secret_key: minioadmin
       insecure: true
@@ -100,7 +100,7 @@ ingester:
       memory: 2Gi
   persistence:
     enabled: true
-    size: 30Gi
+    size: 10Gi
     storageClass: longhorn
 distributor:
   replicas: 3
@@ -144,7 +144,7 @@ compactor:
       memory: 1Gi
   persistence:
     enabled: true
-    size: 10Gi
+    size: 5Gi
     storageClass: longhorn
 memcached:
   enabled: false
