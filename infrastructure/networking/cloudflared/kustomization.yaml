@@ -10,7 +10,7 @@ namespace: cloudflared
 
 resources:
   - ns.yaml
-  - daemon-set.yaml
+  - deployment.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
