@@ -1,0 +1,143 @@
+# Reduced MinIO configuration for resource-constrained environments
+replicas: 1 # Standalone mode
+mode: standalone
+existingSecret: ""
+rootUser: minioadmin
+rootPassword: minioadmin
+image:
+  repository: quay.io/minio/minio
+  tag: RELEASE.2024-04-18T19-09-19Z
+  pullPolicy: IfNotPresent
+mcImage:
+  repository: quay.io/minio/mc
+  tag: RELEASE.2024-04-18T16-45-29Z
+  pullPolicy: IfNotPresent
+persistence:
+  enabled: true
+  storageClass: longhorn
+  accessMode: ReadWriteOnce
+  size: 10Gi # Reduced from 20Gi
+service:
+  type: ClusterIP
+  clusterIP: ~
+  port: 9000
+  nodePort: 32000
+consoleService:
+  type: ClusterIP
+  clusterIP: ~
+  port: 9001
+  nodePort: 32001
+resources:
+  requests:
+    memory: 128Mi # Reduced from 512Mi
+    cpu: 100m # Reduced from 250m
+  limits:
+    memory: 256Mi # Reduced from 1Gi
+    cpu: 200m # Reduced from 500m
+securityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+podSecurityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+networkPolicy:
+  enabled: false
+metrics:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus-stack
+    interval: 30s
+    scrapeTimeout: 10s
+makeBucketJob:
+  enabled: true
+  annotations: {}
+  podAnnotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  resources:
+    requests:
+      memory: 64Mi # Reduced from 128Mi
+      cpu: 50m # Reduced from 100m
+    limits:
+      memory: 128Mi # Reduced from 256Mi
+      cpu: 100m # Reduced from 200m
+buckets:
+  - name: thanos
+    policy: none
+    purge: false
+    versioning: false
+    objectlocking: false
+  - name: loki
+    policy: none
+    purge: false
+    versioning: false
+    objectlocking: false
+  - name: tempo
+    policy: none
+    purge: false
+    versioning: false
+    objectlocking: false
+users: []
+svcaccts:
+  - accessKey: thanos
+    secretKey: thanos123
+    user: thanos
+  - accessKey: loki
+    secretKey: loki123
+    user: loki
+  - accessKey: tempo
+    secretKey: tempo123
+    user: tempo
+policies: []
+customCommands: []
+environment:
+  MINIO_PROMETHEUS_URL: "http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090"
+affinity: {}
+tolerations: []
+nodeSelector: {}
+topologySpreadConstraints: []
+ingress:
+  enabled: false
+consoleIngress:
+  enabled: false
+tls:
+  enabled: false
+  certSecret: ""
+  publicCrt: ""
+  privateKey: ""
+trustedCertsSecret: ""
+postJob:
+  podAnnotations: {}
+  annotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+updateJob:
+  podAnnotations: {}
+  annotations: {}
+  securityContext:
+    enabled: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
