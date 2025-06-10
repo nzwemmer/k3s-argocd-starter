@@ -1,16 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: minio
+  name: loki
 namespace: monitoring
 helmCharts:
-  - name: minio
-    repo: https://charts.min.io/
-    version: "5.4.0"
-    releaseName: minio
+  - name: loki
+    repo: https://grafana.github.io/helm-charts
+    version: "6.30.1"
+    releaseName: loki
     namespace: monitoring
-    valuesFile: values-reduced.yaml
+    valuesFile: values.yaml
 resources:
   - http-routes.yaml
-  - bucket-job.yaml
   - networkpolicy.yaml

@@ -9,7 +9,7 @@ helmCharts:
     version: "17.0.0"
     releaseName: thanos
     namespace: monitoring
-    valuesFile: values.yaml
+    valuesFile: values-reduced.yaml
 resources:
   - objstore-config.yaml
   - http-routes.yaml

@@ -9,7 +9,7 @@ helmCharts:
     version: "1.41.1"
     releaseName: tempo
     namespace: monitoring
-    valuesFile: values.yaml
+    valuesFile: values-reduced.yaml
 resources:
   - http-routes.yaml
   - networkpolicy.yaml

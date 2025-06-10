@@ -9,7 +9,7 @@ helmCharts:
     version: "6.30.1"
     releaseName: loki
     namespace: monitoring
-    valuesFile: values.yaml
+    valuesFile: values-reduced.yaml
 resources:
   - http-routes.yaml
   - networkpolicy.yaml
