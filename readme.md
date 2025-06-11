@@ -354,6 +354,7 @@ kubectl wait --for=condition=Available deployment -l type=infrastructure --all-n
 
 # Deploy monitoring stack
 kubectl apply -f monitoring/argocd/projects/monitoring-project.yaml -n argocd
+kubectl apply -f monitoring/namespace.yaml
 kubectl apply -f monitoring/monitoring-components-appset.yaml -n argocd
 
 # Wait for monitoring components to initialize
