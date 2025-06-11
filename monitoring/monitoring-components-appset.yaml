@@ -18,7 +18,9 @@ spec:
     spec:
       project: monitoring
       source:
-        # Use Kustomize to render the Helm charts and resources
+        # Use the same Kustomize+Helm plugin as other appsets
+        plugin:
+          name: kustomize-build-with-helm
         repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
         targetRevision: HEAD
         path: '{{ .path.path }}'
