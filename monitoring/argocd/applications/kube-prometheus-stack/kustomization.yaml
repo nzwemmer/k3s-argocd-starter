@@ -7,5 +7,3 @@ helmCharts:
     version: 61.3.1
     releaseName: kube-prometheus-stack
     valuesFile: values.yaml
-resources:
-  - rbac.yaml
