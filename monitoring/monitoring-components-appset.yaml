@@ -18,16 +18,18 @@ spec:
     spec:
       project: monitoring
       source:
+        # Use Kustomize to render the Helm charts and resources
         repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
         targetRevision: HEAD
         path: '{{ .path.path }}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: monitoring
+        # All monitoring components go into the 'monitoring' namespace
+        namespace: 'monitoring'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
           - CreateNamespace=false # The namespace is created separately
-          - ServerSideApply=true # Recommended for CRDs 
+          - ServerSideApply=true

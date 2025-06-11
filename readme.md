@@ -356,9 +356,12 @@ kubectl wait --for=condition=Available deployment -l type=infrastructure --all-n
 kubectl apply -f monitoring/argocd/projects/monitoring-project.yaml -n argocd
 kubectl apply -f monitoring/monitoring-components-appset.yaml -n argocd
 
-# Wait for monitoring components
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=kube-prometheus-stack -n monitoring --timeout=600s
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=loki -n monitoring --timeout=600s
+# Wait for monitoring components to initialize
+# This can take a few minutes as images are pulled and resources are provisioned.
+echo "Waiting for monitoring stack to become ready... (this may take a few minutes)"
+kubectl wait --for=condition=Available deployment --all -n monitoring --timeout=600s
+kubectl wait --for=condition=Ready statefulset --all -n monitoring --timeout=600s
+kubectl wait --for=jsonpath='{.status.numberReady}'=.status.desiredNumberScheduled daemonset --all -n monitoring --timeout=600s
 
 # Deploy applications
 kubectl apply -f my-apps/myapplications-appset.yaml
@@ -371,6 +374,9 @@ kubectl get pods -A --sort-by=.metadata.creationTimestamp
 
 # Argo CD status
 kubectl get applications -n argocd -o wide
+
+# Monitoring stack status
+kubectl get pods -n monitoring
 
 # Certificate checks
 kubectl get certificates -A
@@ -385,6 +391,7 @@ cilium connectivity test --all-flows
 - Argo CD: `https://argocd.$DOMAIN`
 - Grafana: `https://grafana.$DOMAIN`
 - Prometheus: `https://prometheus.$DOMAIN`
+- AlertManager: `https://alertmanager.$DOMAIN`
 - ProxiTok: `https://proxitok.$DOMAIN`
 - SearXNG: `https://search.$DOMAIN`
 - LibReddit: `https://reddit.$DOMAIN`
@@ -426,6 +433,21 @@ cilium hubble ui
 # L2 Announcement Problems
 ip -o link show | awk -F': ' '{print $2}'  # Verify node interfaces
 kubectl describe CiliumL2AnnouncementPolicy -n kube-system
+```
+
+**Monitoring Stack Issues:**
+```bash
+# Check pod status in the monitoring namespace
+kubectl get pods -n monitoring
+
+# If pods are stuck, check the Argo CD UI for sync errors.
+# Look at the 'kube-prometheus-stack', 'loki', 'promtail', and 'blackbox-exporter' applications.
+
+# Describe a pod to see its events and find out why it's not starting
+kubectl describe pod <pod-name> -n monitoring
+
+# Check logs for a specific monitoring component (e.g., Grafana)
+kubectl logs -l app.kubernetes.io/name=grafana -n monitoring
 ```
 
 **Critical L2 Note:**
