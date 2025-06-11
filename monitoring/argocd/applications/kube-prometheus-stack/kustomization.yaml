@@ -7,3 +7,7 @@ helmCharts:
     version: 61.3.1
     releaseName: kube-prometheus-stack
     valuesFile: values.yaml
+resources:
+  - httproute-grafana.yaml
+  - httproute-alertmanager.yaml
+  - httproute-prometheus.yaml
