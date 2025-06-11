@@ -12,6 +12,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: kube-system # Required for promtail and some exporters
       server: https://kubernetes.default.svc
+    - namespace: argocd # Required for prometheus-rbac application
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: '*'
       kind: '*'
