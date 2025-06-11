@@ -12,9 +12,9 @@ spec:
           - path: monitoring/argocd/applications/*
   template:
     metadata:
-      name: '{{ .path.basename }}'
       labels:
         type: monitoring
+      name: '{{path.basename}}'
     spec:
       project: monitoring
       source:
@@ -23,7 +23,7 @@ spec:
           name: kustomize-build-with-helm
         repoURL: https://github.com/mitchross/k3s-argocd-starter.git # Corrected the repo URL
         targetRevision: HEAD
-        path: '{{ .path.path }}'
+        path: '{{path}}'
       destination:
         server: https://kubernetes.default.svc
         # All monitoring components go into the 'monitoring' namespace
