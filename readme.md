@@ -70,6 +70,8 @@ graph TD
         MAS --> Grafana
         MAS --> AlertManager
         MAS --> NodeExporter
+        MAS --> Loki
+        MAS --> Promtail
     end
     
     subgraph "User Applications"
@@ -89,8 +91,10 @@ graph TD
 
     style IP fill:#f9f,stroke:#333,stroke-width:2px
     style AP fill:#f9f,stroke:#333,stroke-width:2px
+    style MP fill:#f9f,stroke:#333,stroke-width:2px
     style IAS fill:#bbf,stroke:#333,stroke-width:2px
     style AAS fill:#bbf,stroke:#333,stroke-width:2px
+    style MAS fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 ### Key Features
@@ -236,30 +240,29 @@ Update the argocd-secret secret with the new bcrypt hash.
 kubectl -n argocd patch secret argocd-secret -p '{"stringData": { "admin.password": "$2a$10$rgDBwhzr0ygDfH6scxkdddddx3cd612Cutw1Xu1X3a.kVrRq", "admin.passwordMtime": "'$(date +%FT%T%Z)'" }}'
 ```
 
-### 5. Monitoring Setup (Prometheus Stack)
-```bash
-# The monitoring stack will be deployed automatically through Argo CD
-# It includes:
-# - Prometheus for metrics collection
-# - Grafana for visualization
-# - AlertManager for alerting
-# - Node Exporter for hardware/OS metrics
-# - Various Kubernetes exporters
+### 5. Monitoring Setup (Prometheus, Grafana, Loki)
+The monitoring stack is deployed via Argo CD and provides a comprehensive, homelab-friendly observability solution.
 
-# Access URLs (after DNS/Gateway setup):
-# - Grafana: https://grafana.yourdomain.xyz
-#   Default credentials:
-#   Username: admin
-#   Password: prom-operator
-# - Prometheus: https://prometheus.yourdomain.xyz
-# - AlertManager: https://alertmanager.yourdomain.xyz
+- **Metrics**: `Prometheus` for collecting detailed time-series metrics from the cluster and applications.
+- **Visualization**: `Grafana` comes pre-configured with Prometheus and Loki data sources, plus several default dashboards for instant visibility.
+- **Logging**: `Loki` provides efficient log aggregation, with `Promtail` acting as the agent to collect logs from all applications.
+- **Alerting**: `AlertManager` handles alerts from Prometheus.
+- **Uptime**: `Blackbox Exporter` allows probing of HTTP, TCP, and other endpoints to monitor service availability.
 
-# Storage:
-# The stack is configured with persistent storage using OpenEBS:
-# - Prometheus: 50Gi for time series data
-# - Grafana: 10Gi for dashboards and configurations
-# - AlertManager: 10Gi for alert history
-```
+This stack is designed to be resource-efficient and is a great starting point for observing your homelab.
+
+**Access URLs (after DNS/Gateway setup):**
+- **Grafana**: `https://grafana.yourdomain.xyz`
+  - **Default Credentials**: `admin` / `prom-operator` (You should change this!)
+- **Prometheus**: `https://prometheus.yourdomain.xyz`
+- **AlertManager**: `https://alertmanager.yourdomain.xyz`
+
+**Storage:**
+The stack is configured with persistent storage using your default StorageClass (e.g., OpenEBS):
+- **Prometheus**: `10Gi` for time series data
+- **Loki**: `10Gi` for log data
+- **Grafana**: `2Gi` for dashboards and configurations
+- **AlertManager**: `1Gi` for alert history
 
 ## 🔒 Security Setup
 
@@ -350,10 +353,12 @@ kubectl apply -f infrastructure/infrastructure-components-appset.yaml -n argocd
 kubectl wait --for=condition=Available deployment -l type=infrastructure --all-namespaces --timeout=1800s
 
 # Deploy monitoring stack
+kubectl apply -f monitoring/argocd/projects/monitoring-project.yaml -n argocd
 kubectl apply -f monitoring/monitoring-components-appset.yaml -n argocd
 
 # Wait for monitoring components
-kubectl wait --for=condition=Available deployment -l type=monitoring --all-namespaces --timeout=600s
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=kube-prometheus-stack -n monitoring --timeout=600s
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=loki -n monitoring --timeout=600s
 
 # Deploy applications
 kubectl apply -f my-apps/myapplications-appset.yaml
@@ -378,6 +383,8 @@ cilium connectivity test --all-flows
 
 **Access Endpoints:**
 - Argo CD: `https://argocd.$DOMAIN`
+- Grafana: `https://grafana.$DOMAIN`
+- Prometheus: `https://prometheus.$DOMAIN`
 - ProxiTok: `https://proxitok.$DOMAIN`
 - SearXNG: `https://search.$DOMAIN`
 - LibReddit: `https://reddit.$DOMAIN`
@@ -386,6 +393,7 @@ cilium connectivity test --all-flows
 
 | Category       | Components                          |
 |----------------|-------------------------------------|
+| **Monitoring** | Prometheus, Grafana, Loki, Promtail |
 | **Privacy**    | ProxiTok, SearXNG, LibReddit        |
 | **Infra**      | Cilium, Gateway API, Cloudflared    |
 | **Storage**    | OpenEBS                             |

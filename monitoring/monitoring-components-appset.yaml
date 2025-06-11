@@ -3,28 +3,24 @@ kind: ApplicationSet
 metadata:
   name: monitoring-components
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   generators:
     - git:
-        repoURL: https://github.com/mitchross/k3s-argocd-starter
+        repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
         revision: HEAD
         directories:
-          - path: monitoring/*
+          - path: monitoring/argocd/applications/*
   template:
     metadata:
-      name: '{{path.basename}}'
+      name: '{{ .path.basename }}'
       labels:
         type: monitoring
     spec:
       project: monitoring
       source:
-        plugin:
-          name: kustomize-build-with-helm
-        repoURL: https://github.com/mitchross/k3s-argocd-starter
+        repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
         targetRevision: HEAD
-        path: '{{path}}'
+        path: '{{ .path.path }}'
       destination:
         server: https://kubernetes.default.svc
         namespace: monitoring
@@ -32,14 +28,6 @@ spec:
         automated:
           prune: true
           selfHeal: true
-        retry:
-          limit: 5
-          backoff:
-            duration: 5s
-            factor: 2
-            maxDuration: 3m
         syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
-          - RespectIgnoreDifferences=true
-          - Replace=true
+          - CreateNamespace=false # The namespace is created separately
+          - ServerSideApply=true # Recommended for CRDs 

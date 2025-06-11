@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blackbox-exporter
+  namespace: argocd
+spec:
+  project: monitoring
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus-blackbox-exporter
+    targetRevision: 8.8.0
+    helm:
+      releaseName: blackbox-exporter
+      values: |
+        # Resource tuning for homelab
+        resources:
+          requests:
+            cpu: 20m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
+
+        # Enable the ServiceMonitor for Prometheus to scrape this exporter
+        serviceMonitor:
+          enabled: true
+
+        # Default configuration for blackbox exporter
+        # We will define Probes separately as CRDs
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              timeout: 5s
+              http:
+                valid_http_versions:
+                  - HTTP/1.1
+                  - HTTP/2.0
+                valid_status_codes: [] # Any 2xx status code is considered valid
+                method: GET
+                no_follow_redirects: false
+                preferred_ip_protocol: "ip4"
+---
+# Example Probe for the Kubernetes API Server
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: kubernetes-apiserver
+  namespace: monitoring
+  labels:
+    probe: kubernetes-apiserver
+spec:
+  jobName: kubernetes-apiservers
+  interval: 60s
+  module: http_2xx
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+    scheme: https
+  targets:
+    staticConfig:
+      static:
+        - https://kubernetes.default.svc
