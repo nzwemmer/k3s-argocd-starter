@@ -6,6 +6,8 @@ kind: Role
 metadata:
   name: prometheus-admission-secret-reader
   namespace: argocd # This Role grants permissions within the 'argocd' namespace
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1" # Ensure this is created before the job runs
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -16,6 +18,8 @@ kind: RoleBinding
 metadata:
   name: prometheus-admission-secret-reader-binding
   namespace: argocd # This RoleBinding applies within the 'argocd' namespace
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1" # Ensure this is created before the job runs
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
