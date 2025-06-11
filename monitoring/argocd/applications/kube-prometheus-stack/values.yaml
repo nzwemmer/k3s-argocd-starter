@@ -29,7 +29,10 @@ prometheus:
       limits:
         cpu: 1
         memory: 1.5Gi
-    # Scrape configs for other components will be added via ServiceMonitors
+    # Disable the default ingress for prometheus
+    ingress:
+      enabled: false
+      # Scrape configs for other components will be added via ServiceMonitors
 prometheusOperator:
   admissionWebhooks:
     enabled: true
@@ -60,19 +63,8 @@ alertmanager:
       limits:
         cpu: 200m
         memory: 250Mi
-  ingress:
-    enabled: true
-    ingressClassName: cilium # IMPORTANT: Match your IngressClass
-    annotations:
-      cert-manager.io/cluster-issuer: cloudflare-cluster-issuer
-    hosts:
-      - "alertmanager.{{ .Values.global.domain }}"
-    paths:
-      - /
-    tls:
-      - secretName: alertmanager-tls
-        hosts:
-          - "alertmanager.{{ .Values.global.domain }}"
+    ingress:
+      enabled: false
 #
 # Grafana Configuration
 #
@@ -93,6 +85,10 @@ grafana:
     limits:
       cpu: 300m
       memory: 300Mi
+  # Add a more patient readiness probe to prevent the sidecar race condition
+  readinessProbe:
+    initialDelaySeconds: 60
+    timeoutSeconds: 30
   # Pre-configure Loki datasource
   additionalDataSources:
     - name: Loki
@@ -133,18 +129,7 @@ grafana:
         revision: 23
         datasource: Prometheus
   ingress:
-    enabled: true
-    ingressClassName: cilium # IMPORTANT: Match your IngressClass
-    annotations:
-      cert-manager.io/cluster-issuer: cloudflare-cluster-issuer
-    hosts:
-      - "grafana.{{ .Values.global.domain }}"
-    paths:
-      - /
-    tls:
-      - secretName: grafana-tls
-        hosts:
-          - "grafana.{{ .Values.global.domain }}"
+    enabled: false
 #
 # Resource tuning for exporters
 #
