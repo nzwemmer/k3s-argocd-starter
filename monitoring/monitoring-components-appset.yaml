@@ -6,7 +6,7 @@ metadata:
 spec:
   generators:
     - git:
-        repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
+        repoURL: https://github.com/mitchross/k3s-argocd-starter.git # Corrected the repo URL
         revision: HEAD
         directories:
           - path: monitoring/argocd/applications/*
@@ -21,7 +21,7 @@ spec:
         # Use the same Kustomize+Helm plugin as other appsets
         plugin:
           name: kustomize-build-with-helm
-        repoURL: https://github.com/mitch-ross/k3s-argocd-starter.git # Change this to your repo
+        repoURL: https://github.com/mitchross/k3s-argocd-starter.git # Corrected the repo URL
         targetRevision: HEAD
         path: '{{ .path.path }}'
       destination:
