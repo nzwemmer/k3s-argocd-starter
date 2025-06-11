@@ -30,6 +30,14 @@ prometheus:
         cpu: 1
         memory: 1.5Gi
     # Scrape configs for other components will be added via ServiceMonitors
+prometheusOperator:
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+      # This forces the operator to wait for the webhook to be ready
+      # which prevents the "secret not found" mounting error.
+      priorityClassName: system-cluster-critical
 #
 # Alertmanager Configuration
 #
