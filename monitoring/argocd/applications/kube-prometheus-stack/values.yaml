@@ -4,7 +4,7 @@
 global:
   # This should be overridden with your actual domain
   # e.g., via a config management tool or manually
-  domain: yourdomain.xyz
+  domain: vanillax.xyz
 #
 # Prometheus Configuration
 #
