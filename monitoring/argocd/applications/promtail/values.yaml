@@ -10,3 +10,10 @@ resources:
   limits:
     cpu: 200m
     memory: 256Mi
+# Add a more patient readiness probe to prevent timeouts on startup in a homelab environment
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http-metrics
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
