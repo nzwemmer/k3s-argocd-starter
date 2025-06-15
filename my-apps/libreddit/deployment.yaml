@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/name: libreddit
     spec:
       nodeSelector:
-        kubernetes.io/hostname: vanillax-nuc
+        kubernetes.io/hostname: k3s-s01
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
