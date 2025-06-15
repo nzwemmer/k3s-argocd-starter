@@ -1,17 +1,17 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: cert-vanillax
+  name: cert-nielszwemmer
   namespace: gateway
 spec:
   dnsNames:
-    - "*.vanillax.xyz"
-    - vanillax.xyz
+    - "*.nielszwemmer.nl"
+    - nielszwemmer.nl
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer
     name: cloudflare-cluster-issuer
-  secretName: cert-vanillax
+  secretName: cert-nielszwemmer
   usages:
     - digital signature
     - key encipherment

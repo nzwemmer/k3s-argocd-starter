@@ -9,7 +9,7 @@ spec:
       namespace: gateway
       sectionName: https
   hostnames:
-    - "libreddit.vanillax.xyz"
+    - "libreddit.nielszwemmer.nl"
   rules:
     - matches:
         - path:

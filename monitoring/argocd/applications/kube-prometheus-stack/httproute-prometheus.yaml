@@ -8,7 +8,7 @@ spec:
     - name: main-gateway
       namespace: networking
   hostnames:
-    - "prometheus.vanillax.xyz" # Make sure this matches the global.domain in values.yaml
+    - "prometheus.nielszwemmer.nl" # Make sure this matches the global.domain in values.yaml
   rules:
     - matches:
         - path:
