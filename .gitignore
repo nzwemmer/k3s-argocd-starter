@@ -8,4 +8,4 @@ infrastructure/controllers/argocd/charts/*
 /monitoring/promtail/charts
 /monitoring/tempo/charts
 /monitoring/thanos/charts
-kubeconfig.json
+kubeconfig.yaml
